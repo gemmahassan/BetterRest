@@ -32,7 +32,7 @@ struct ContentView: View {
             
             Form {
                 
-                VStack(alignment: .leading, spacing: 0) {
+                Section {
                     
                     Text("When do you want to wake up?")
                         .font(.headline)
@@ -43,7 +43,7 @@ struct ContentView: View {
                         .labelsHidden()
                 }
                 
-                VStack(alignment: .leading, spacing: 0) {
+                Section {
                     
                     Text("Desired amount of sleep")
                         .font(.headline)
@@ -54,20 +54,28 @@ struct ContentView: View {
                             step: 0.25)
                 }
                 
-                VStack(alignment: .leading, spacing: 0) {
+                Section {
                     
                     Text("Daily coffee intake")
                         .font(.headline)
                     
-                    Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups",
-                            value: $coffeeAmount,
-                            in: 1...20)
+                    Picker("Number of cups:", selection: $coffeeAmount, content: {
+                        ForEach(0..<20, id: \.self) {
+                            Text("\($0)")
+                        }
+                    })
+                }
+                
+                Section {
+                    
+                    Text("Your ideal bedtime is...\(calculateBedtime().formatted(date: .omitted, time: .shortened))")
+                        .font(.title2)
                 }
             }
             .navigationTitle("Better Rest")
-            .toolbar {
-                Button("Calculate", action: calculateBedtime)
-            }
+//            .toolbar {
+//                Button("Calculate", action: calculateBedtime)
+//            }
             .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
             } message: {
@@ -76,7 +84,7 @@ struct ContentView: View {
         }
     }
     
-    func calculateBedtime() {
+    func calculateBedtime() -> Date {
         
         do {
             
@@ -89,17 +97,12 @@ struct ContentView: View {
             
             let prediction = try model.prediction(wake: Double(hour + minute), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount))
             
-            let sleepTime = wakeUp - prediction.actualSleep
+            return wakeUp - prediction.actualSleep
             
-            alertTitle = "Your ideal bedtime is..."
-            alertMessage = sleepTime.formatted(date: .omitted, time: .shortened)
         } catch {
             
-            alertTitle = "Error"
-            alertMessage = "Sorry, there was a problem calculating your bedtime."
+            return Date.now
         }
-        
-        showingAlert = true
     }
 }
 
